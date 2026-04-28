@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart' show Widget, TextEditingController, StatefulWidget, State, BuildContext, EdgeInsets, Colors, BorderRadius, Radius, BoxDecoration, MainAxisSize, SizedBox, Text, Navigator, ElevatedButton, Column, Container, showModalBottomSheet, TextField, ListView, Padding, Icons, Icon, FloatingActionButton, Scaffold;
-import 'package:studyplanner/app%20design/app_card.dart';
-import 'package:studyplanner/app%20design/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:studyplanner/app design/app_card.dart';
+import 'package:studyplanner/app design/app_colors.dart';
+import 'package:studyplanner/services/firestore_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TasksScreen extends StatefulWidget {
   @override
@@ -8,14 +10,10 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  List<String> tasks = ["Study UI", "Workout"];
-
-  void addTask(String t) {
-    setState(() => tasks.add(t));
-  }
+  final firestore = FirestoreService();
 
   void showAdd() {
-    final c = TextEditingController();
+    final controller = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -29,35 +27,81 @@ class _TasksScreenState extends State<TasksScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _input(c),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: "Enter task",
+                border: InputBorder.none,
+              ),
+            ),
             SizedBox(height: 15),
+
             ElevatedButton(
-              onPressed: () {
-                addTask(c.text);
+              onPressed: () async {
+                if (controller.text.trim().isEmpty) return;
+
+                await firestore.addTask(controller.text.trim());
+
                 Navigator.pop(context);
               },
               child: Text("Add Task"),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _input(TextEditingController c) => TextField(controller: c);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: ListView.builder(
-        padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
-        itemCount: tasks.length,
-        itemBuilder: (_, i) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: AppCard(child: Text(tasks[i])),
-        ),
+
+      body: StreamBuilder<QuerySnapshot>(
+        stream: firestore.getTasks(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text("No tasks yet"));
+          }
+
+          final docs = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
+            itemCount: docs.length,
+            itemBuilder: (_, i) {
+              final task = docs[i];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AppCard(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(task['title']),
+                      ),
+
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          await firestore
+                              .deleteTask(task.id);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         onPressed: showAdd,

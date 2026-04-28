@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:studyplanner/app design/app_colors.dart';
 import 'package:studyplanner/app%20design/app_card.dart';
+import 'package:studyplanner/services/firestore_service.dart';
 
 class FocusScreen extends StatefulWidget {
   @override
@@ -48,6 +49,12 @@ class _FocusScreenState extends State<FocusScreen> {
   /// 🔁 Reset
   void resetTimer() {
     ticker?.cancel();
+
+    final sessionMinutes = (25 * 60 - sessionDuration) ~/ 60;
+
+    if (sessionMinutes > 0) {
+      FirestoreService().addSession(sessionMinutes);
+    }
 
     setState(() {
       isRunning = false;
@@ -105,7 +112,6 @@ class _FocusScreenState extends State<FocusScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               /// 🔹 Title
               Text(
                 isBreak ? "Break Time" : "Focus Session",
@@ -120,9 +126,7 @@ class _FocusScreenState extends State<FocusScreen> {
                 style: TextStyle(
                   fontSize: 44,
                   fontWeight: FontWeight.bold,
-                  color: isBreak
-                      ? Colors.green
-                      : AppColors.primary,
+                  color: isBreak ? Colors.green : AppColors.primary,
                 ),
               ),
 
@@ -132,28 +136,18 @@ class _FocusScreenState extends State<FocusScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-
                   /// ▶️ Start / Resume
-                  _circleButton(
-                    icon: Icons.play_arrow,
-                    onTap: startTimer,
-                  ),
+                  _circleButton(icon: Icons.play_arrow, onTap: startTimer),
 
                   SizedBox(width: 15),
 
                   /// ⏸ Pause
-                  _circleButton(
-                    icon: Icons.pause,
-                    onTap: pauseTimer,
-                  ),
+                  _circleButton(icon: Icons.pause, onTap: pauseTimer),
 
                   SizedBox(width: 15),
 
                   /// 🔁 Reset
-                  _circleButton(
-                    icon: Icons.refresh,
-                    onTap: resetTimer,
-                  ),
+                  _circleButton(icon: Icons.refresh, onTap: resetTimer),
                 ],
               ),
 
@@ -173,10 +167,7 @@ class _FocusScreenState extends State<FocusScreen> {
     );
   }
 
-  Widget _circleButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

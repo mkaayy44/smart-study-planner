@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:studyplanner/app%20design/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:studyplanner/app design/app_colors.dart';
 import 'package:studyplanner/buttons/skip_button.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
 import 'package:studyplanner/screens/signup_screen.dart';
@@ -15,6 +16,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool loading = false;
 
+  Future<void> login() async {
+    setState(() => loading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email.text.trim(),
+        password: password.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => MainNavigation()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Login failed";
+
+      if (e.code == 'user-not-found') {
+        message = "No user found for this email";
+      } else if (e.code == 'wrong-password') {
+        message = "Wrong password";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,33 +58,24 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 Skip button (top right)
               SkipButton(),
 
               Spacer(),
 
-              /// 🔹 Title
               Text("Welcome back", style: AppStyles.title),
               SizedBox(height: 8),
               Text("Stay focused, stay calm", style: AppStyles.subtitle),
 
               SizedBox(height: 40),
 
-              /// 🔹 Inputs
               _input("Email", email),
               SizedBox(height: 16),
               _input("Password", password, isPassword: true),
 
               SizedBox(height: 30),
 
-              /// 🔹 Login Button
               GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => MainNavigation()),
-                  );
-                },
+                onTap: loading ? null : login,
                 child: Container(
                   height: 55,
                   decoration: BoxDecoration(
@@ -63,7 +87,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? CircularProgressIndicator(color: Colors.white)
                         : Text(
                             "Login",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
                           ),
                   ),
                 ),
@@ -71,11 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               SizedBox(height: 20),
 
-              /// 🔹 Signup redirect
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Don’t have an account? ", style: AppStyles.subtitle),
+                  Text("Don’t have an account? ",
+                      style: AppStyles.subtitle),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -116,7 +143,10 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextField(
         controller: c,
         obscureText: isPassword,
-        decoration: InputDecoration(border: InputBorder.none, hintText: hint),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hint,
+        ),
       ),
     );
   }

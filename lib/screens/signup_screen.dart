@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:studyplanner/app%20design/app_colors.dart';
 import 'package:studyplanner/buttons/skip_button.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:studyplanner/services/firestore_service.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -50,14 +52,31 @@ class _SignupScreenState extends State<SignupScreen> {
               onTap: () async {
                 setState(() => loading = true);
 
-                await Future.delayed(Duration(seconds: 2)); // placeholder
+                try {
+                  // 1. Create auth user
+                  final credential = await FirebaseAuth.instance
+                      .createUserWithEmailAndPassword(
+                        email: email.text,
+                        password: password.text,
+                      );
+
+                  // 2. Save user in Firestore
+                  await FirestoreService().createUser(
+                    name: name.text,
+                    email: email.text,
+                    phone: "N/A",
+                  );
+
+                  // 3. Navigate
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => MainNavigation()),
+                  );
+                } catch (e) {
+                  print(e);
+                }
 
                 setState(() => loading = false);
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => MainNavigation()),
-                );
               },
               child: Container(
                 height: 55,

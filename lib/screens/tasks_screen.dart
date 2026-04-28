@@ -51,7 +51,7 @@ class _TasksScreenState extends State<TasksScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: ListView.builder(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
         itemCount: tasks.length,
         itemBuilder: (_, i) => Padding(
           padding: const EdgeInsets.only(bottom: 12),

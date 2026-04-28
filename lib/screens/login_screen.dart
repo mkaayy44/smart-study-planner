@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:studyplanner/app%20design/app_colors.dart';
+import 'package:studyplanner/buttons/skip_button.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
 import 'package:studyplanner/screens/signup_screen.dart';
 
@@ -25,21 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// 🔹 Skip button (top right)
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => MainNavigation()),
-                    );
-                  },
-                  child: Text(
-                    "Skip",
-                    style: TextStyle(color: AppColors.textSoft),
-                  ),
-                ),
-              ),
+              SkipButton(),
 
               Spacer(),
 

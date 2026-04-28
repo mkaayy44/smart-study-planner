@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:studyplanner/app%20design/app_colors.dart';
+import 'package:studyplanner/buttons/skip_button.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -24,6 +25,13 @@ class _SignupScreenState extends State<SignupScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Spacer(),
+
+            /// 🔹 Skip button (top right)
+            SkipButton(),
+
+            Spacer(),
+
             Text("Create account", style: AppStyles.title),
             SizedBox(height: 8),
             Text("Start your focused journey", style: AppStyles.subtitle),
@@ -40,7 +48,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
             GestureDetector(
               onTap: () async {
-                setState(() => loading = true); 
+                setState(() => loading = true);
 
                 await Future.delayed(Duration(seconds: 2)); // placeholder
 
@@ -60,9 +68,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Center(
                   child: loading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text("Sign Up",
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 16)),
+                      : Text(
+                          "Sign Up",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                 ),
               ),
             ),
@@ -72,15 +81,18 @@ class _SignupScreenState extends State<SignupScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text("Already have an account? Login"),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _input(String hint, TextEditingController c,
-      {bool isPassword = false}) {
+  Widget _input(
+    String hint,
+    TextEditingController c, {
+    bool isPassword = false,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(

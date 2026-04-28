@@ -28,8 +28,8 @@ class _MainNavigationState extends State<MainNavigation> {
       body: screens[index],
 
       bottomNavigationBar: Container(
-        margin: EdgeInsets.all(16),
-        padding: EdgeInsets.symmetric(vertical: 10),
+        margin: EdgeInsets.all(20),
+        padding: EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(25),

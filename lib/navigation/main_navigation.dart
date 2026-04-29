@@ -25,43 +25,55 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[index],
-
-      bottomNavigationBar: Container(
-        margin: EdgeInsets.all(20),
-        padding: EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 20,
-            )
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(5, (i) {
-            IconData icon = [
-              Icons.home,
-              Icons.check,
-              Icons.bar_chart,
-              Icons.timer,
-              Icons.person
-            ][i];
-
-            return GestureDetector(
-              onTap: () => setState(() => index = i),
-              child: Icon(
-                icon,
-                color: index == i
-                    ? AppColors.primary
-                    : AppColors.textSoft,
+      backgroundColor: Colors.transparent, // Make scaffold background transparent
+      body: Stack(
+        children: [
+          // Main content
+          screens[index],
+          
+          // Floating bottom navbar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              margin: EdgeInsets.all(20),
+              padding: EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 20,
+                  )
+                ],
               ),
-            );
-          }),
-        ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(5, (i) {
+                  IconData icon = [
+                    Icons.home,
+                    Icons.check,
+                    Icons.bar_chart,
+                    Icons.timer,
+                    Icons.person
+                  ][i];
+
+                  return GestureDetector(
+                    onTap: () => setState(() => index = i),
+                    child: Icon(
+                      icon,
+                      color: index == i
+                          ? AppColors.primary
+                          : AppColors.textSoft,
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

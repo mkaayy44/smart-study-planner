@@ -1,7 +1,7 @@
- - overflow when typing in signup or login field fix DONE
+  - overflow when typing in signup or login field fix DONE
     - when error appears in signup or login display correctly DONE
     - add correct fields for tasks addition not only title DONE
-    - remove light pink bg in bottom navbar
+    - remove light pink bg in bottom navbar DONE
     - make focus screen more aesthetic
     - profile fetch correct info of user
     - add images in signup and login screens
@@ -10,3 +10,4 @@
     - make logout working
     - smooth nav between pages i want
     - change outside icon app
+    - make tasks all can add not only logged in 

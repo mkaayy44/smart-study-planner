@@ -1,0 +1,9 @@
+- overflow when typing in signup or login field fix
+- when error appears in signup or login display correctly
+- add correct fields for tasks addition not only title
+- remove light pink bg in bottom navbar
+- make focus screen more aesthetic
+- profile fetch correct info of user
+- add images in signup and login screens
+- fix skip in signup screen not so down
+- see if we can add header

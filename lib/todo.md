@@ -1,4 +1,4 @@
- - overflow when typing in signup or login field fix
+  - overflow when typing in signup or login field fix
     - when error appears in signup or login display correctly
     - add correct fields for tasks addition not only title
     - remove light pink bg in bottom navbar
@@ -9,3 +9,4 @@
     - see if we can add header
     - make logout working
     - smooth nav between pages i want
+    - change outside icon app

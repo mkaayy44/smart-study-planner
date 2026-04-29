@@ -17,17 +17,6 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthState();
-  }
-
-  void _checkAuthState() {
-    currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      // Redirect to login if no user
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login');
-      });
-    }
   }
 
   void showAdd() {
@@ -60,7 +49,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 20),
 
-                  // Title Field
                   TextField(
                     controller: titleController,
                     decoration: InputDecoration(
@@ -71,7 +59,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Subject Field
                   TextField(
                     controller: subjectController,
                     decoration: InputDecoration(
@@ -82,7 +69,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Priority Dropdown
                   DropdownButtonFormField<String>(
                     value: selectedPriority,
                     decoration: InputDecoration(
@@ -120,7 +106,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Difficulty Dropdown
                   DropdownButtonFormField<String>(
                     value: selectedDifficulty,
                     decoration: InputDecoration(
@@ -141,7 +126,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Deadline Date Picker
                   InkWell(
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
@@ -180,7 +164,6 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   SizedBox(height: 24),
 
-                  // Add Button
                   ElevatedButton(
                     onPressed: () async {
                       if (titleController.text.trim().isEmpty) {
@@ -394,35 +377,21 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if user is authenticated
-    if (FirebaseAuth.instance.currentUser == null) {
-      return Scaffold(
-        backgroundColor: AppColors.bg,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                "Please login to view tasks",
-                style: TextStyle(fontSize: 18),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: Text("Go to Login"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: AppColors.bg,
+      appBar: AppBar(
+        title: Text("Tasks"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          // Add button in AppBar instead of FAB
+          IconButton(
+            icon: Icon(Icons.add, color: AppColors.primary, size: 30),
+            onPressed: showAdd,
+          ),
+          SizedBox(width: 10),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: firestore.getTasks(),
         builder: (context, snapshot) {
@@ -471,7 +440,7 @@ class _TasksScreenState extends State<TasksScreen> {
           final docs = snapshot.data!.docs;
 
           return ListView.builder(
-            padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
             itemCount: docs.length,
             itemBuilder: (_, i) {
               final task = docs[i];
@@ -484,7 +453,6 @@ class _TasksScreenState extends State<TasksScreen> {
               final isCompleted = taskData['isCompleted'] as bool? ?? false;
               final deadline = (taskData['deadline'] as Timestamp?)?.toDate();
 
-              // Color coding for priority
               Color priorityColor = Colors.grey;
               switch (priority) {
                 case 'low':
@@ -510,7 +478,6 @@ class _TasksScreenState extends State<TasksScreen> {
                           Expanded(
                             child: Row(
                               children: [
-                                // Checkbox for completion status
                                 Checkbox(
                                   value: isCompleted,
                                   onChanged: (value) async {
@@ -554,12 +521,10 @@ class _TasksScreenState extends State<TasksScreen> {
                           ),
                           Row(
                             children: [
-                              // Edit button
                               IconButton(
                                 icon: Icon(Icons.edit, color: AppColors.primary),
                                 onPressed: () => showEditDialog(task.id, taskData),
                               ),
-                              // Delete button
                               IconButton(
                                 icon: Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
@@ -583,7 +548,6 @@ class _TasksScreenState extends State<TasksScreen> {
                           ),
                         ],
                       ),
-                      // Task details row
                       Padding(
                         padding: EdgeInsets.only(left: 48, right: 16, bottom: 8),
                         child: Row(
@@ -668,11 +632,6 @@ class _TasksScreenState extends State<TasksScreen> {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        onPressed: showAdd,
-        child: Icon(Icons.add),
       ),
     );
   }

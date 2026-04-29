@@ -25,6 +25,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.transparent, // Make scaffold background transparent
       body: Stack(
         children: [

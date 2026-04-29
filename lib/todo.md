@@ -1,6 +1,6 @@
-  - overflow when typing in signup or login field fix
-    - when error appears in signup or login display correctly
-    - add correct fields for tasks addition not only title
+ - overflow when typing in signup or login field fix DONE
+    - when error appears in signup or login display correctly DONE
+    - add correct fields for tasks addition not only title DONE
     - remove light pink bg in bottom navbar
     - make focus screen more aesthetic
     - profile fetch correct info of user

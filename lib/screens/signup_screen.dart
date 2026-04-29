@@ -6,31 +6,35 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:studyplanner/services/firestore_service.dart';
 
 class SignupScreen extends StatefulWidget {
-  @override
-  State<SignupScreen> createState() => _SignupScreenState();
+@override
+State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final name = TextEditingController();
-  final email = TextEditingController();
-  final password = TextEditingController();
-  final phone = TextEditingController();
+final name = TextEditingController();
+final email = TextEditingController();
+final password = TextEditingController();
+final phone = TextEditingController();
 
-  bool loading = false;
+bool loading = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Spacer(),
-            SkipButton(),
-            Spacer(),
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+backgroundColor: AppColors.bg,
+body: SafeArea(
+child: SingleChildScrollView(
+child: Padding(
+padding: EdgeInsets.all(24),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+mainAxisAlignment: MainAxisAlignment.end,
+children: [SkipButton()],
+),
+SizedBox(height: 40),
+
             Text("Create account"),
             SizedBox(height: 40),
 
@@ -61,12 +65,12 @@ class _SignupScreenState extends State<SignupScreen> {
                 try {
                   final credential = await FirebaseAuth.instance
                       .createUserWithEmailAndPassword(
-                        email: email.text.trim(),
-                        password: password.text.trim(),
-                      );
+                    email: email.text.trim(),
+                    password: password.text.trim(),
+                  );
 
                   final user = credential.user;
-                  if (user == null) throw Exception("User creation failed");
+                  if (user == null) throw Exception();
 
                   await FirestoreService().createUser(
                     name: name.text.trim(),
@@ -74,16 +78,14 @@ class _SignupScreenState extends State<SignupScreen> {
                     phone: phone.text.trim(),
                   );
 
-                  if (!mounted) return;
-
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => MainNavigation()),
                   );
                 } catch (e) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("Error")));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error")),
+                  );
                 }
 
                 setState(() => loading = false);
@@ -101,18 +103,19 @@ class _SignupScreenState extends State<SignupScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
 
-  Widget _input(
-    String hint,
-    TextEditingController c, {
-    bool isPassword = false,
-  }) {
-    return TextField(
-      controller: c,
-      obscureText: isPassword,
-      decoration: InputDecoration(hintText: hint),
-    );
-  }
+
+}
+
+Widget _input(String hint, TextEditingController c,
+{bool isPassword = false}) {
+return TextField(
+controller: c,
+obscureText: isPassword,
+decoration: InputDecoration(hintText: hint),
+);
+}
 }

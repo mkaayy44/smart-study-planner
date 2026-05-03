@@ -18,6 +18,8 @@
     - make ui better for all pages but till now good
 
     TECHNICAL TASKS
+    - remove back arrow from header tasks screen DONE
+    - when not logged in in profile say "login/ signup to access profile" or smth like that DONE
     - task reminder if deadline near notification
     - study schedule generator
     - urgency score calculator

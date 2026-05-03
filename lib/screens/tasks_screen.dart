@@ -141,7 +141,10 @@ class _TasksScreenState extends State<TasksScreen> {
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
@@ -154,7 +157,9 @@ class _TasksScreenState extends State<TasksScreen> {
                                 ? "Select Deadline"
                                 : "Deadline: ${selectedDeadline!.toLocal().toString().split(' ')[0]}",
                             style: TextStyle(
-                              color: selectedDeadline == null ? Colors.grey : Colors.black,
+                              color: selectedDeadline == null
+                                  ? Colors.grey
+                                  : Colors.black,
                             ),
                           ),
                           Icon(Icons.calendar_today),
@@ -207,11 +212,16 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void showEditDialog(String taskId, Map<String, dynamic> currentData) {
-    final titleController = TextEditingController(text: currentData['title'] ?? '');
-    final subjectController = TextEditingController(text: currentData['subject'] ?? '');
+    final titleController = TextEditingController(
+      text: currentData['title'] ?? '',
+    );
+    final subjectController = TextEditingController(
+      text: currentData['subject'] ?? '',
+    );
     String selectedPriority = currentData['priority'] ?? 'medium';
     String selectedDifficulty = currentData['difficulty'] ?? 'medium';
-    DateTime? selectedDeadline = (currentData['deadline'] as Timestamp?)?.toDate();
+    DateTime? selectedDeadline = (currentData['deadline'] as Timestamp?)
+        ?.toDate();
 
     showModalBottomSheet(
       context: context,
@@ -309,7 +319,10 @@ class _TasksScreenState extends State<TasksScreen> {
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
@@ -322,7 +335,9 @@ class _TasksScreenState extends State<TasksScreen> {
                                 ? "Select Deadline"
                                 : "Deadline: ${selectedDeadline!.toLocal().toString().split(' ')[0]}",
                             style: TextStyle(
-                              color: selectedDeadline == null ? Colors.grey : Colors.black,
+                              color: selectedDeadline == null
+                                  ? Colors.grey
+                                  : Colors.black,
                             ),
                           ),
                           Icon(Icons.calendar_today),
@@ -383,6 +398,7 @@ class _TasksScreenState extends State<TasksScreen> {
         title: Text("Tasks"),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
         actions: [
           // Add button in AppBar instead of FAB
           IconButton(
@@ -445,7 +461,7 @@ class _TasksScreenState extends State<TasksScreen> {
             itemBuilder: (_, i) {
               final task = docs[i];
               final taskData = task.data() as Map<String, dynamic>;
-              
+
               final taskTitle = taskData['title'] as String? ?? 'Untitled Task';
               final subject = taskData['subject'] as String? ?? '';
               final priority = taskData['priority'] as String? ?? 'medium';
@@ -482,11 +498,20 @@ class _TasksScreenState extends State<TasksScreen> {
                                   value: isCompleted,
                                   onChanged: (value) async {
                                     try {
-                                      await firestore.toggleTaskCompletion(task.id, value!);
+                                      await firestore.toggleTaskCompletion(
+                                        task.id,
+                                        value!,
+                                      );
                                     } catch (e) {
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text("Error updating task")),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Error updating task",
+                                            ),
+                                          ),
                                         );
                                       }
                                     }
@@ -495,14 +520,17 @@ class _TasksScreenState extends State<TasksScreen> {
                                 ),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         taskTitle,
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                          decoration: isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
                                         ),
                                       ),
                                       if (subject.isNotEmpty)
@@ -522,8 +550,12 @@ class _TasksScreenState extends State<TasksScreen> {
                           Row(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit, color: AppColors.primary),
-                                onPressed: () => showEditDialog(task.id, taskData),
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: AppColors.primary,
+                                ),
+                                onPressed: () =>
+                                    showEditDialog(task.id, taskData),
                               ),
                               IconButton(
                                 icon: Icon(Icons.delete, color: Colors.red),
@@ -531,14 +563,20 @@ class _TasksScreenState extends State<TasksScreen> {
                                   try {
                                     await firestore.deleteTask(task.id);
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(content: Text('Task deleted')),
                                       );
                                     }
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Error deleting task")),
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text("Error deleting task"),
+                                        ),
                                       );
                                     }
                                   }
@@ -549,11 +587,18 @@ class _TasksScreenState extends State<TasksScreen> {
                         ],
                       ),
                       Padding(
-                        padding: EdgeInsets.only(left: 48, right: 16, bottom: 8),
+                        padding: EdgeInsets.only(
+                          left: 48,
+                          right: 16,
+                          bottom: 8,
+                        ),
                         child: Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: priorityColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
@@ -583,7 +628,10 @@ class _TasksScreenState extends State<TasksScreen> {
                             ),
                             SizedBox(width: 8),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.blue.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
@@ -600,7 +648,10 @@ class _TasksScreenState extends State<TasksScreen> {
                             if (deadline != null) ...[
                               SizedBox(width: 8),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.purple.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(12),
@@ -608,7 +659,11 @@ class _TasksScreenState extends State<TasksScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.calendar_today, size: 10, color: Colors.purple),
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 10,
+                                      color: Colors.purple,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       "${deadline.day}/${deadline.month}/${deadline.year}",

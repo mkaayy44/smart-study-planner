@@ -1,11 +1,11 @@
+    QUICK TASKS
     - overflow when typing in signup or login field fix DONE
     - when error appears in signup or login display correctly DONE
     - add correct fields for tasks addition not only title DONE
     - remove light pink bg in bottom navbar DONE
     - make tasks all can add not only logged in DONE
     - profile fetch correct info of user DONE
-    - make logout working
-    - if swipe to complete task make option to see completed tasks
+    - make logout working DONE
     
     DESIGN TASKS
     - make add button more aesthetic
@@ -16,6 +16,7 @@
     - smooth nav between pages i want
     - change outside icon app
     - make ui better for all pages but till now good
+    - please dont exit screen for full focus pomodoro page
 
     TECHNICAL TASKS
     - remove back arrow from header tasks screen DONE
@@ -29,3 +30,5 @@
     - pomodoro focus save data session backend if logged in 
     - productivity analysis (hours/day, completed tasks, streak, charts)
     - home page analytics more
+    - if swipe to complete task make option to see completed tasks
+    - if error happens it happens behind dialog instead of closing it

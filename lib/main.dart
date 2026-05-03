@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:studyplanner/firebase_options.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
 import 'package:studyplanner/screens/login_screen.dart';
+import 'package:studyplanner/services/notification_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  tz.initializeTimeZones();
+  await NotificationService.init();
   runApp(const MyApp());
 }
 

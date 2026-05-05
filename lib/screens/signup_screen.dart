@@ -69,15 +69,16 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
+      resizeToAvoidBottomInset: true, // This handles keyboard naturally
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView( // Single scroll view without Expanded
           padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkipButton(),
 
-              Spacer(),
+              SizedBox(height: 40), // Reduced spacing
 
               /// 🔹 Title
               Text("Create account", style: AppStyles.title),
@@ -87,6 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
               SizedBox(height: 40),
 
+              /// 🔹 Input Fields
               _input("Name", name),
               SizedBox(height: 16),
               _input("Phone Number", phone),
@@ -95,7 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16),
               _input("Password", password, isPassword: true),
 
-              SizedBox(height: 30),
+              SizedBox(height: 40),
 
               /// 🔹 Button
               GestureDetector(
@@ -139,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
 
-              Spacer(),
+              SizedBox(height: 30), // Bottom padding
             ],
           ),
         ),
@@ -153,6 +155,7 @@ class _SignupScreenState extends State<SignupScreen> {
     bool isPassword = false,
   }) {
     return Container(
+      height: 55,
       padding: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -166,6 +169,7 @@ class _SignupScreenState extends State<SignupScreen> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
+          contentPadding: EdgeInsets.symmetric(vertical: 0),
         ),
       ),
     );

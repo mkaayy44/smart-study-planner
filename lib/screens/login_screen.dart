@@ -54,8 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
+      resizeToAvoidBottomInset: true, // This handles keyboard naturally
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView( // Single scroll view without Expanded
           padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,21 +64,21 @@ class _LoginScreenState extends State<LoginScreen> {
               /// 🔹 Skip button
               SkipButton(),
 
-              Spacer(),
+              SizedBox(height: 80), // Fixed spacing instead of Spacer()
 
               /// 🔹 Title
               Text("Welcome back", style: AppStyles.title),
               SizedBox(height: 8),
               Text("Stay focused, stay calm", style: AppStyles.subtitle),
 
-              SizedBox(height: 40),
+              SizedBox(height: 50),
 
-              /// 🔹 Inputs
+              /// 🔹 Input Fields
               _input("Email", email),
               SizedBox(height: 16),
               _input("Password", password, isPassword: true),
 
-              SizedBox(height: 30),
+              SizedBox(height: 40),
 
               /// 🔹 Login button
               GestureDetector(
@@ -130,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              Spacer(),
+              SizedBox(height: 30), // Bottom padding
             ],
           ),
         ),
@@ -144,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isPassword = false,
   }) {
     return Container(
+      height: 55,
       padding: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -155,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
+          contentPadding: EdgeInsets.symmetric(vertical: 0),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import 'package:studyplanner/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:studyplanner/services/notification_service.dart';
+import 'package:studyplanner/services/pdf_service.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -230,7 +231,9 @@ class _TasksScreenState extends State<TasksScreen> {
                       if (titleController.text.trim().isEmpty) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Please enter a task title")),
+                            SnackBar(
+                              content: Text("Please enter a task title"),
+                            ),
                           );
                         }
                         return;
@@ -279,20 +282,25 @@ class _TasksScreenState extends State<TasksScreen> {
                           deadline: finalDeadline,
                         );
 
-                        final notificationTime = finalDeadline.subtract(Duration(minutes: 1));
-                        
+                        final notificationTime = finalDeadline.subtract(
+                          Duration(minutes: 1),
+                        );
+
                         if (notificationTime.isAfter(DateTime.now())) {
                           await NotificationService.scheduleNotification(
                             id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
                             title: "Task Reminder",
-                            body: "Don't forget: ${titleController.text.trim()} is due soon!",
+                            body:
+                                "Don't forget: ${titleController.text.trim()} is due soon!",
                             scheduledDate: notificationTime,
                           );
-                          
+
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Task added! Reminder set for 1 minute before deadline."),
+                                content: Text(
+                                  "Task added! Reminder set for 1 minute before deadline.",
+                                ),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -301,14 +309,17 @@ class _TasksScreenState extends State<TasksScreen> {
                           await NotificationService.scheduleNotification(
                             id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
                             title: "Task Deadline",
-                            body: "Don't forget: ${titleController.text.trim()} is due now!",
+                            body:
+                                "Don't forget: ${titleController.text.trim()} is due now!",
                             scheduledDate: finalDeadline,
                           );
-                          
+
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Task added! Reminder set for deadline time."),
+                                content: Text(
+                                  "Task added! Reminder set for deadline time.",
+                                ),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -332,7 +343,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   SizedBox(height: 20),
                 ],
               ),
-            )
+            ),
           );
         },
       ),
@@ -348,11 +359,15 @@ class _TasksScreenState extends State<TasksScreen> {
     );
     String selectedPriority = currentData['priority'] ?? 'medium';
     String selectedDifficulty = currentData['difficulty'] ?? 'medium';
-    
-    DateTime? deadlineDateTime = (currentData['deadline'] as Timestamp?)?.toDate();
+
+    DateTime? deadlineDateTime = (currentData['deadline'] as Timestamp?)
+        ?.toDate();
     DateTime? selectedDeadline = deadlineDateTime;
-    TimeOfDay? selectedTime = deadlineDateTime != null 
-        ? TimeOfDay(hour: deadlineDateTime.hour, minute: deadlineDateTime.minute)
+    TimeOfDay? selectedTime = deadlineDateTime != null
+        ? TimeOfDay(
+            hour: deadlineDateTime.hour,
+            minute: deadlineDateTime.minute,
+          )
         : null;
 
     showModalBottomSheet(
@@ -477,7 +492,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 12),
 
                   InkWell(
@@ -519,7 +534,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 24),
 
                   ElevatedButton(
@@ -527,7 +542,9 @@ class _TasksScreenState extends State<TasksScreen> {
                       if (titleController.text.trim().isEmpty) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Please enter a task title")),
+                            SnackBar(
+                              content: Text("Please enter a task title"),
+                            ),
                           );
                         }
                         return;
@@ -543,7 +560,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             selectedTime!.hour,
                             selectedTime!.minute,
                           );
-                          
+
                           if (finalDeadline.isBefore(DateTime.now())) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -593,6 +610,141 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  Widget buildSmartFeatures() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: generateSmartSchedule,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.white),
+                    SizedBox(height: 10),
+                    Text(
+                      "Smart Schedule",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Generate your study plan",
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> generateSchedule(
+    List<QueryDocumentSnapshot> docs,
+  ) {
+    List<Map<String, dynamic>> tasks = docs
+        .map((e) => e.data() as Map<String, dynamic>)
+        .toList();
+
+    tasks.sort((a, b) {
+      final scoreA = calculateScore(a);
+      final scoreB = calculateScore(b);
+      return scoreB.compareTo(scoreA);
+    });
+
+    DateTime currentTime = DateTime.now();
+    List<Map<String, dynamic>> schedule = [];
+
+    for (var task in tasks) {
+      int duration = estimateDuration(task); // in minutes
+
+      DateTime start = currentTime;
+      DateTime end = currentTime.add(Duration(minutes: duration));
+
+      schedule.add({
+        'title': task['title'],
+        'priority': task['priority'],
+        'difficulty': task['difficulty'],
+        'deadline': task['deadline'],
+        'start': start,
+        'end': end,
+      });
+
+      currentTime = end.add(Duration(minutes: 10)); // break
+    }
+
+    return schedule;
+  }
+
+  int estimateDuration(Map<String, dynamic> task) {
+    final difficulty = (task['difficulty'] ?? 'easy')
+        .toString()
+        .toLowerCase()
+        .trim();
+
+    switch (difficulty) {
+      case 'hard':
+        return 70; // 1h 10m
+      case 'medium':
+        return 45;
+      case 'easy':
+      default:
+        return 25;
+    }
+  }
+
+  Future<void> generateSmartSchedule() async {
+    final snapshot = await firestore.getTasks().first;
+
+    final docs = snapshot.docs;
+
+    final schedule = generateSchedule(docs);
+
+    await createPdf(schedule);
+  }
+
+  double calculateScore(Map<String, dynamic> task) {
+    final priority = task['priority'];
+    final deadline = (task['deadline'] as Timestamp?)?.toDate();
+
+    int priorityScore;
+    switch (priority) {
+      case 'high':
+        priorityScore = 3;
+        break;
+      case 'medium':
+        priorityScore = 2;
+        break;
+      default:
+        priorityScore = 1;
+    }
+
+    double urgencyScore = 0;
+
+    if (deadline != null) {
+      final hoursLeft = deadline.difference(DateTime.now()).inHours;
+
+      if (hoursLeft <= 0) {
+        urgencyScore = 100; // overdue
+      } else {
+        urgencyScore = 1 / hoursLeft;
+      }
+    }
+
+    return priorityScore * 10 + urgencyScore;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (FirebaseAuth.instance.currentUser == null) {
@@ -622,7 +774,7 @@ class _TasksScreenState extends State<TasksScreen> {
         ),
       );
     }
-    
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -685,230 +837,263 @@ class _TasksScreenState extends State<TasksScreen> {
 
           final docs = snapshot.data!.docs;
 
-          return ListView.builder(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
-            itemCount: docs.length,
-            itemBuilder: (_, i) {
-              final task = docs[i];
-              final taskData = task.data() as Map<String, dynamic>;
+          // FIX: Use Column with Expanded, NOT SingleChildScrollView
+          return Column(
+            children: [
+              buildSmartFeatures(),
+              Expanded(
+                // This will take all remaining space
+                child: ListView.builder(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  itemCount: docs.length,
+                  itemBuilder: (_, i) {
+                    final task = docs[i];
+                    final taskData = task.data() as Map<String, dynamic>;
 
-              final taskTitle = taskData['title'] as String? ?? 'Untitled Task';
-              final subject = taskData['subject'] as String? ?? '';
-              final priority = taskData['priority'] as String? ?? 'medium';
-              final difficulty = taskData['difficulty'] as String? ?? 'medium';
-              final isCompleted = taskData['isCompleted'] as bool? ?? false;
-              final deadline = (taskData['deadline'] as Timestamp?)?.toDate();
+                    final taskTitle =
+                        taskData['title'] as String? ?? 'Untitled Task';
+                    final subject = taskData['subject'] as String? ?? '';
+                    final priority =
+                        taskData['priority'] as String? ?? 'medium';
+                    final difficulty =
+                        taskData['difficulty'] as String? ?? 'medium';
+                    final isCompleted =
+                        taskData['isCompleted'] as bool? ?? false;
+                    final deadline = (taskData['deadline'] as Timestamp?)
+                        ?.toDate();
 
-              Color priorityColor = Colors.grey;
-              switch (priority) {
-                case 'low':
-                  priorityColor = Colors.green;
-                  break;
-                case 'medium':
-                  priorityColor = Colors.orange;
-                  break;
-                case 'high':
-                  priorityColor = Colors.red;
-                  break;
-              }
+                    Color priorityColor = Colors.grey;
+                    switch (priority) {
+                      case 'low':
+                        priorityColor = Colors.green;
+                        break;
+                      case 'medium':
+                        priorityColor = Colors.orange;
+                        break;
+                      case 'high':
+                        priorityColor = Colors.red;
+                        break;
+                    }
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Checkbox
-                          Checkbox(
-                            value: isCompleted,
-                            onChanged: (value) async {
-                              try {
-                                await firestore.toggleTaskCompletion(
-                                  task.id,
-                                  value!,
-                                );
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Error updating task",
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            activeColor: AppColors.primary,
-                          ),
-                          // Task info - Expanded to take available space
-                          Expanded(
-                            child: Column(
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: AppCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  taskTitle,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    decoration: isCompleted
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                  ),
+                                // Checkbox
+                                Checkbox(
+                                  value: isCompleted,
+                                  onChanged: (value) async {
+                                    try {
+                                      await firestore.toggleTaskCompletion(
+                                        task.id,
+                                        value!,
+                                      );
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Error updating task",
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  activeColor: AppColors.primary,
                                 ),
-                                if (subject.isNotEmpty)
-                                  Text(
-                                    subject,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                // Tags section - moved here to be under task info
-                                SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: [
-                                    // Priority tag
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: priorityColor.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              color: priorityColor,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            priority.toUpperCase(),
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: priorityColor,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Difficulty tag
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        difficulty.toUpperCase(),
+                                // Task info - Expanded to take available space
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        taskTitle,
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.blue,
+                                          decoration: isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
                                         ),
                                       ),
-                                    ),
-                                    // Deadline tag (if exists)
-                                    if (deadline != null)
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
+                                      if (subject.isNotEmpty)
+                                        Text(
+                                          subject,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.purple.withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.calendar_today,
-                                              size: 10,
-                                              color: Colors.purple,
+                                      // Tags section - moved here to be under task info
+                                      SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: [
+                                          // Priority tag
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
                                             ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              _formatDeadline(deadline),
+                                            decoration: BoxDecoration(
+                                              color: priorityColor.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  width: 8,
+                                                  height: 8,
+                                                  decoration: BoxDecoration(
+                                                    color: priorityColor,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  priority.toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: priorityColor,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Difficulty tag
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              difficulty.toUpperCase(),
                                               style: TextStyle(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w600,
-                                                color: Colors.purple,
+                                                color: Colors.blue,
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                          // Deadline tag (if exists)
+                                          if (deadline != null)
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.purple.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.calendar_today,
+                                                    size: 10,
+                                                    color: Colors.purple,
+                                                  ),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    _formatDeadline(deadline),
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.purple,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
                                       ),
+                                    ],
+                                  ),
+                                ),
+                                // Action buttons
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.edit,
+                                        color: AppColors.primary,
+                                        size: 20,
+                                      ),
+                                      onPressed: () =>
+                                          showEditDialog(task.id, taskData),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                      onPressed: () async {
+                                        try {
+                                          await firestore.deleteTask(task.id);
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Task deleted'),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "Error deleting task",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                    ),
                                   ],
                                 ),
                               ],
                             ),
-                          ),
-                          // Action buttons
-                          Column(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  Icons.edit,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                                onPressed: () =>
-                                    showEditDialog(task.id, taskData),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red, size: 20),
-                                onPressed: () async {
-                                  try {
-                                    await firestore.deleteTask(task.id);
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text('Task deleted')),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text("Error deleting task"),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -919,7 +1104,7 @@ class _TasksScreenState extends State<TasksScreen> {
   String _formatDeadline(DateTime deadline) {
     final now = DateTime.now();
     final difference = deadline.difference(now);
-    
+
     if (difference.inDays == 0) {
       // Today
       return "Today ${deadline.hour.toString().padLeft(2, '0')}:${deadline.minute.toString().padLeft(2, '0')}";

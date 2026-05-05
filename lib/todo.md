@@ -1,4 +1,4 @@
-    QUICK TASKS
+QUICK TASKS
     - overflow when typing in signup or login field fix DONE
     - when error appears in signup or login display correctly DONE
     - add correct fields for tasks addition not only title DONE
@@ -21,8 +21,8 @@
     TECHNICAL TASKS
     - remove back arrow from header tasks screen DONE
     - when not logged in in profile say "login/ signup to access profile" or smth like that DONE
-    - task reminder if deadline near notification
-    - study schedule generator
+    - task reminder if deadline near notification LATER
+    - study schedule generator DONE
     - urgency score calculator
     - 'im overwhelmed' button keeps only imp stuff
     - smart scheduling filters in tasks page (sort tasks by deadline, priority, diffc, assign to days)

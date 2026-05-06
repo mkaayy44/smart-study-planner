@@ -666,8 +666,25 @@ class _TasksScreenState extends State<TasksScreen> {
     DateTime currentTime = DateTime.now();
     List<Map<String, dynamic>> schedule = [];
 
+    int sessionCount = 0;
+
     for (var task in tasks) {
-      int duration = estimateDuration(task); // in minutes
+      // ⛔ Stop late-night studying
+      if (currentTime.hour >= 22) {
+        currentTime = DateTime(
+          currentTime.year,
+          currentTime.month,
+          currentTime.day + 1,
+          9, // next day at 9 AM
+        );
+      }
+
+      int duration = estimateDuration(task);
+
+      // Reduce long sessions if user is tired
+      if (sessionCount >= 3 && duration > 45) {
+        duration = 30; // split heavy tasks
+      }
 
       DateTime start = currentTime;
       DateTime end = currentTime.add(Duration(minutes: duration));
@@ -679,9 +696,15 @@ class _TasksScreenState extends State<TasksScreen> {
         'deadline': task['deadline'],
         'start': start,
         'end': end,
+        'score': calculateScore(task), // 👈 ADD THIS
       });
 
-      currentTime = end.add(Duration(minutes: 10)); // break
+      sessionCount++;
+
+      // Smarter breaks
+      int breakMinutes = (duration >= 60) ? 15 : 10;
+
+      currentTime = end.add(Duration(minutes: breakMinutes));
     }
 
     return schedule;
@@ -715,20 +738,18 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   double calculateScore(Map<String, dynamic> task) {
-    final priority = task['priority'];
+    final priority = (task['priority'] ?? 'low').toString();
+    final difficulty = (task['difficulty'] ?? 'easy').toString();
     final deadline = (task['deadline'] as Timestamp?)?.toDate();
 
-    int priorityScore;
-    switch (priority) {
-      case 'high':
-        priorityScore = 3;
-        break;
-      case 'medium':
-        priorityScore = 2;
-        break;
-      default:
-        priorityScore = 1;
-    }
+    // Priority score (0–3)
+    final priorityMap = {'low': 1.0, 'medium': 2.0, 'high': 3.0};
+
+    // Difficulty score (0–2)
+    final difficultyMap = {'easy': 1.0, 'medium': 1.5, 'hard': 2.0};
+
+    double priorityScore = priorityMap[priority] ?? 1.0;
+    double difficultyScore = difficultyMap[difficulty] ?? 1.0;
 
     double urgencyScore = 0;
 
@@ -736,13 +757,20 @@ class _TasksScreenState extends State<TasksScreen> {
       final hoursLeft = deadline.difference(DateTime.now()).inHours;
 
       if (hoursLeft <= 0) {
-        urgencyScore = 100; // overdue
+        urgencyScore = 5; // VERY urgent
+      } else if (hoursLeft < 6) {
+        urgencyScore = 4;
+      } else if (hoursLeft < 24) {
+        urgencyScore = 3;
+      } else if (hoursLeft < 72) {
+        urgencyScore = 2;
       } else {
-        urgencyScore = 1 / hoursLeft;
+        urgencyScore = 1;
       }
     }
 
-    return priorityScore * 10 + urgencyScore;
+    // Final weighted score
+    return (priorityScore * 2) + (difficultyScore * 1.5) + (urgencyScore * 3);
   }
 
   @override

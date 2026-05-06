@@ -116,6 +116,8 @@ Future<void> createPdf(List<Map<String, dynamic>> schedule) async {
           if (priority == 'medium') priorityColor = PdfColors.orange;
           if (priority == 'high') priorityColor = PdfColors.red;
 
+          final score = task['score'] ?? 0;
+
           return pw.Container(
             margin: const pw.EdgeInsets.only(bottom: 12),
             padding: const pw.EdgeInsets.all(12),
@@ -175,6 +177,35 @@ Future<void> createPdf(List<Map<String, dynamic>> schedule) async {
                     color: PdfColors.grey700,
                   ),
                 ),
+
+                pw.SizedBox(height: 6),
+
+                pw.Text(
+                  "Study duration: ${duration.inMinutes} minutes",
+                  style: const pw.TextStyle(
+                    fontSize: 11,
+                    color: PdfColors.blueGrey,
+                  ),
+                ),
+
+                pw.SizedBox(height: 6),
+
+                pw.Text(
+                  "Study duration: ${duration.inMinutes} minutes",
+                  style: const pw.TextStyle(
+                    fontSize: 11,
+                    color: PdfColors.blueGrey,
+                  ),
+                ),
+
+                pw.SizedBox(height: 4),
+
+                pw.Text(
+                  "Urgency Score: ${score.toStringAsFixed(1)}",
+                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.red),
+                ),
+
+                pw.SizedBox(height: 6),
               ],
             ),
           );

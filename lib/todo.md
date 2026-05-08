@@ -24,7 +24,7 @@ QUICK TASKS
     - task reminder if deadline near notification LATER
     - study schedule generator DONE
     - urgency score calculator DONE
-    - 'im overwhelmed' button keeps only imp stuff
+    - 'im overwhelmed' button keeps only imp stuff DONE
     - smart scheduling filters in tasks page (sort tasks by deadline, priority, diffc, assign to days) DONE
     - automatically suggests when to study task
     - pomodoro focus save data session backend if logged in 

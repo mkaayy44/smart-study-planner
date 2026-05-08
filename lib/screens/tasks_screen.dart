@@ -19,12 +19,154 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   final firestore = FirestoreService();
   User? currentUser;
+  String selectedSort = 'deadline';
+  String selectedPriorityFilter = 'all';
+  String selectedDifficultyFilter = 'all';
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Beirut'));
+  }
+
+  void showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Filters & Sorting",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // SEARCH
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "Search task name...",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value.toLowerCase();
+                      });
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // SORT
+                  DropdownButtonFormField<String>(
+                    value: selectedSort,
+                    decoration: InputDecoration(
+                      labelText: "Sort By",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'deadline',
+                        child: Text("Deadline"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'priority',
+                        child: Text("Priority"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'difficulty',
+                        child: Text("Difficulty"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'urgency',
+                        child: Text("Urgency Score"),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        selectedSort = value!;
+                      });
+
+                      setState(() {});
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // PRIORITY FILTER
+                  DropdownButtonFormField<String>(
+                    value: selectedPriorityFilter,
+                    decoration: InputDecoration(
+                      labelText: "Priority Filter",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem(value: 'all', child: Text("All")),
+                      DropdownMenuItem(value: 'high', child: Text("High")),
+                      DropdownMenuItem(value: 'medium', child: Text("Medium")),
+                      DropdownMenuItem(value: 'low', child: Text("Low")),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        selectedPriorityFilter = value!;
+                      });
+
+                      setState(() {});
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // DIFFICULTY FILTER
+                  DropdownButtonFormField<String>(
+                    value: selectedDifficultyFilter,
+                    decoration: InputDecoration(
+                      labelText: "Difficulty Filter",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem(value: 'all', child: Text("All")),
+                      DropdownMenuItem(value: 'hard', child: Text("Hard")),
+                      DropdownMenuItem(value: 'medium', child: Text("Medium")),
+                      DropdownMenuItem(value: 'easy', child: Text("Easy")),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        selectedDifficultyFilter = value!;
+                      });
+
+                      setState(() {});
+                    },
+                  ),
+
+                  SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("Apply"),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   String getCurrentTimeZone() {
@@ -812,9 +954,15 @@ class _TasksScreenState extends State<TasksScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
+            icon: Icon(Icons.filter_list, color: AppColors.primary),
+            onPressed: showFilterBottomSheet,
+          ),
+
+          IconButton(
             icon: Icon(Icons.add, color: AppColors.primary, size: 30),
             onPressed: showAdd,
           ),
+
           SizedBox(width: 10),
         ],
       ),
@@ -863,7 +1011,71 @@ class _TasksScreenState extends State<TasksScreen> {
             );
           }
 
-          final docs = snapshot.data!.docs;
+          List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
+
+          // SEARCH FILTER
+          docs = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+
+            final title = (data['title'] ?? '').toString().toLowerCase();
+
+            return title.contains(searchQuery);
+          }).toList();
+
+          // PRIORITY FILTER
+          if (selectedPriorityFilter != 'all') {
+            docs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+
+              return data['priority'] == selectedPriorityFilter;
+            }).toList();
+          }
+
+          // DIFFICULTY FILTER
+          if (selectedDifficultyFilter != 'all') {
+            docs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+
+              return data['difficulty'] == selectedDifficultyFilter;
+            }).toList();
+          }
+
+          // SORTING
+          docs.sort((a, b) {
+            final taskA = a.data() as Map<String, dynamic>;
+            final taskB = b.data() as Map<String, dynamic>;
+
+            if (selectedSort == 'priority') {
+              final priorityMap = {'high': 3, 'medium': 2, 'low': 1};
+
+              return (priorityMap[taskB['priority']] ?? 0).compareTo(
+                priorityMap[taskA['priority']] ?? 0,
+              );
+            }
+
+            if (selectedSort == 'difficulty') {
+              final difficultyMap = {'hard': 3, 'medium': 2, 'easy': 1};
+
+              return (difficultyMap[taskB['difficulty']] ?? 0).compareTo(
+                difficultyMap[taskA['difficulty']] ?? 0,
+              );
+            }
+
+            if (selectedSort == 'urgency') {
+              return calculateScore(taskB).compareTo(calculateScore(taskA));
+            }
+
+            // DEADLINE SORT
+            final deadlineA = (taskA['deadline'] as Timestamp?)?.toDate();
+
+            final deadlineB = (taskB['deadline'] as Timestamp?)?.toDate();
+
+            if (deadlineA == null || deadlineB == null) {
+              return 0;
+            }
+
+            return deadlineA.compareTo(deadlineB);
+          });
 
           // FIX: Use Column with Expanded, NOT SingleChildScrollView
           return Column(

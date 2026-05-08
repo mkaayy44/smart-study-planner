@@ -23,6 +23,7 @@ class _TasksScreenState extends State<TasksScreen> {
   String selectedPriorityFilter = 'all';
   String selectedDifficultyFilter = 'all';
   String searchQuery = '';
+  bool overwhelmedMode = false;
 
   @override
   void initState() {
@@ -787,6 +788,56 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
             ),
           ),
+
+          SizedBox(width: 12),
+
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  overwhelmedMode = !overwhelmedMode;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: overwhelmedMode
+                        ? Colors.red
+                        : Colors.green,
+                    content: Text(
+                      overwhelmedMode
+                          ? "Overwhelmed mode enabled 💙"
+                          : "Overwhelmed mode disabled",
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: overwhelmedMode ? Colors.redAccent : Colors.orange,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.psychology, color: Colors.white),
+                    SizedBox(height: 10),
+                    Text(
+                      "I'm Overwhelmed",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Show only urgent easy tasks",
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1040,42 +1091,80 @@ class _TasksScreenState extends State<TasksScreen> {
             }).toList();
           }
 
-          // SORTING
-          docs.sort((a, b) {
-            final taskA = a.data() as Map<String, dynamic>;
-            final taskB = b.data() as Map<String, dynamic>;
+          // OVERWHELMED MODE
+          if (overwhelmedMode) {
+            docs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
 
-            if (selectedSort == 'priority') {
-              final priorityMap = {'high': 3, 'medium': 2, 'low': 1};
+              final deadline = (data['deadline'] as Timestamp?)?.toDate();
 
-              return (priorityMap[taskB['priority']] ?? 0).compareTo(
-                priorityMap[taskA['priority']] ?? 0,
+              if (deadline == null) return false;
+
+              final now = DateTime.now();
+
+              // only today
+              final isToday =
+                  deadline.year == now.year &&
+                  deadline.month == now.month &&
+                  deadline.day == now.day;
+
+              // only important tasks
+              final isImportant =
+                  data['priority'] == 'high' || calculateScore(data) >= 12;
+
+              return isToday && isImportant;
+            }).toList();
+
+            // easy -> medium -> hard
+            docs.sort((a, b) {
+              final taskA = a.data() as Map<String, dynamic>;
+              final taskB = b.data() as Map<String, dynamic>;
+
+              final difficultyMap = {'easy': 1, 'medium': 2, 'hard': 3};
+
+              return (difficultyMap[taskA['difficulty']] ?? 0).compareTo(
+                difficultyMap[taskB['difficulty']] ?? 0,
               );
-            }
+            });
+          }
 
-            if (selectedSort == 'difficulty') {
-              final difficultyMap = {'hard': 3, 'medium': 2, 'easy': 1};
+          if (!overwhelmedMode) {
+            docs.sort((a, b) {
+              final taskA = a.data() as Map<String, dynamic>;
+              final taskB = b.data() as Map<String, dynamic>;
 
-              return (difficultyMap[taskB['difficulty']] ?? 0).compareTo(
-                difficultyMap[taskA['difficulty']] ?? 0,
-              );
-            }
+              if (selectedSort == 'priority') {
+                final priorityMap = {'high': 3, 'medium': 2, 'low': 1};
 
-            if (selectedSort == 'urgency') {
-              return calculateScore(taskB).compareTo(calculateScore(taskA));
-            }
+                return (priorityMap[taskB['priority']] ?? 0).compareTo(
+                  priorityMap[taskA['priority']] ?? 0,
+                );
+              }
 
-            // DEADLINE SORT
-            final deadlineA = (taskA['deadline'] as Timestamp?)?.toDate();
+              if (selectedSort == 'difficulty') {
+                final difficultyMap = {'hard': 3, 'medium': 2, 'easy': 1};
 
-            final deadlineB = (taskB['deadline'] as Timestamp?)?.toDate();
+                return (difficultyMap[taskB['difficulty']] ?? 0).compareTo(
+                  difficultyMap[taskA['difficulty']] ?? 0,
+                );
+              }
 
-            if (deadlineA == null || deadlineB == null) {
-              return 0;
-            }
+              if (selectedSort == 'urgency') {
+                return calculateScore(taskB).compareTo(calculateScore(taskA));
+              }
 
-            return deadlineA.compareTo(deadlineB);
-          });
+              // DEADLINE SORT
+              final deadlineA = (taskA['deadline'] as Timestamp?)?.toDate();
+
+              final deadlineB = (taskB['deadline'] as Timestamp?)?.toDate();
+
+              if (deadlineA == null || deadlineB == null) {
+                return 0;
+              }
+
+              return deadlineA.compareTo(deadlineB);
+            });
+          }
 
           // FIX: Use Column with Expanded, NOT SingleChildScrollView
           return Column(

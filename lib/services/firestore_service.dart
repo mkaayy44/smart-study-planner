@@ -131,4 +131,49 @@ class FirestoreService {
       'date': Timestamp.now(),
     });
   }
+
+  Future<String> startFocusSession({required bool isBreak}) async {
+    final userId = uid;
+
+    if (userId == null) {
+      throw Exception("User not authenticated");
+    }
+
+    final doc = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('sessions')
+        .add({
+          'startedAt': Timestamp.now(),
+          'endedAt': null,
+          'duration': 0,
+          'isBreak': isBreak,
+          'createdAt': Timestamp.now(),
+        });
+
+    return doc.id;
+  }
+
+  Future<void> endFocusSession({
+    required String sessionId,
+    required int durationSeconds,
+    required String formattedDuration,
+  }) async {
+    final userId = uid;
+
+    if (userId == null) {
+      throw Exception("User not authenticated");
+    }
+
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('sessions')
+        .doc(sessionId)
+        .update({
+          'endedAt': Timestamp.now(),
+          'durationSeconds': durationSeconds,
+          'formattedDuration': formattedDuration,
+        });
+  }
 }

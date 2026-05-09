@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:studyplanner/app design/app_colors.dart';
-import 'package:studyplanner/app%20design/app_card.dart';
 import 'package:studyplanner/services/firestore_service.dart';
 
 class FocusScreen extends StatefulWidget {
+  const FocusScreen({super.key});
+
   @override
   State<FocusScreen> createState() => _FocusScreenState();
 }
@@ -12,154 +14,236 @@ class FocusScreen extends StatefulWidget {
 class _FocusScreenState extends State<FocusScreen> {
   Timer? ticker;
 
-  DateTime? startTime;
+  final int focusDuration = 25 * 60;
+  final int breakDuration = 5 * 60;
 
-  int sessionDuration = 25 * 60; // default 25 min
+  int remainingSeconds = 25 * 60;
+
   bool isRunning = false;
   bool isBreak = false;
 
-  /// ▶️ Start / Resume
-  void startTimer() {
-    if (isRunning) return;
+  DateTime? sessionStartTime;
 
-    startTime = DateTime.now();
+  String? currentSessionId;
 
-    setState(() => isRunning = true);
+  bool sessionStarted = false;
 
-    ticker?.cancel();
-    ticker = Timer.periodic(Duration(seconds: 1), (_) {
-      setState(() {});
-    });
-  }
-
-  /// ⏸ Pause
-  void pauseTimer() {
-    if (startTime == null) return;
-
-    final elapsed = DateTime.now().difference(startTime!).inSeconds;
-
-    sessionDuration -= elapsed;
-
-    startTime = null;
-    ticker?.cancel();
-
-    setState(() => isRunning = false);
-  }
-
-  /// 🔁 Reset
-  void resetTimer() {
-    ticker?.cancel();
-
-    final sessionMinutes = (25 * 60 - sessionDuration) ~/ 60;
-
-    if (sessionMinutes > 0) {
-      FirestoreService().addSession(sessionMinutes);
-    }
-
-    setState(() {
-      isRunning = false;
-      isBreak = false;
-      sessionDuration = 25 * 60;
-      startTime = null;
-    });
-  }
-
-  /// 🔄 Switch Focus <-> Break
-  void switchSession() {
-    startTime = DateTime.now();
-
-    setState(() {
-      isBreak = !isBreak;
-      sessionDuration = isBreak ? 5 * 60 : 25 * 60;
-    });
-  }
-
-  /// 🧠 REAL TIME CALCULATION
-  int get secondsLeft {
-    if (startTime == null) return sessionDuration;
-
-    final elapsed = DateTime.now().difference(startTime!).inSeconds;
-    final remaining = sessionDuration - elapsed;
-
-    if (remaining <= 0) {
-      switchSession();
-      return 0;
-    }
-
-    return remaining;
-  }
-
-  String formatTime(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return "$m:$s";
-  }
+  DateTime? sessionStartedAt;
 
   @override
   void dispose() {
     ticker?.cancel();
+
+    finishSession();
+
     super.dispose();
+  }
+
+  void startTimer() async {
+    if (isRunning) return;
+
+    // Create ONLY ONE session
+    if (!sessionStarted) {
+      sessionStarted = true;
+      sessionStartedAt = DateTime.now();
+
+      currentSessionId = await FirestoreService().startFocusSession(
+        isBreak: isBreak,
+      );
+    }
+
+    setState(() {
+      isRunning = true;
+    });
+
+    ticker?.cancel();
+
+    ticker = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (remainingSeconds > 0) {
+        setState(() {
+          remainingSeconds--;
+        });
+      } else {
+        switchMode();
+      }
+    });
+  }
+
+  void pauseTimer() {
+    ticker?.cancel();
+
+    setState(() {
+      isRunning = false;
+    });
+  }
+
+  void resetTimer() {
+    ticker?.cancel();
+
+    setState(() {
+      isRunning = false;
+      isBreak = false;
+      remainingSeconds = focusDuration;
+    });
+  }
+
+  Future<void> finishSession() async {
+    if (currentSessionId == null || sessionStartedAt == null) return;
+
+    final durationInSeconds = DateTime.now()
+        .difference(sessionStartedAt!)
+        .inSeconds;
+
+    // Ignore tiny sessions
+    if (durationInSeconds < 5) return;
+
+    final minutes = durationInSeconds ~/ 60;
+    final seconds = durationInSeconds % 60;
+
+    final formattedDuration = "${minutes}m ${seconds}s";
+
+    await FirestoreService().endFocusSession(
+      sessionId: currentSessionId!,
+      durationSeconds: durationInSeconds,
+      formattedDuration: formattedDuration,
+    );
+  }
+
+  void switchMode() {
+    ticker?.cancel();
+
+    setState(() {
+      isBreak = !isBreak;
+      isRunning = false;
+      remainingSeconds = isBreak ? breakDuration : focusDuration;
+    });
+  }
+
+  String formatTime(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+
+    return "$minutes:$secs";
+  }
+
+  double get progress {
+    final total = isBreak ? breakDuration : focusDuration;
+
+    return remainingSeconds / total;
   }
 
   @override
   Widget build(BuildContext context) {
-    final time = secondsLeft;
-
     return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: Center(
-        child: AppCard(
+      backgroundColor: Color(0xFFF7F7FB),
+
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              /// 🔹 Title
+              SizedBox(height: 20),
+
               Text(
-                isBreak ? "Break Time" : "Focus Session",
-                style: AppStyles.subtitle,
+                isBreak ? "Break Time" : "Pomodoro Focus",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               ),
 
               SizedBox(height: 10),
 
-              /// 🔹 Timer
               Text(
-                formatTime(time),
-                style: TextStyle(
-                  fontSize: 44,
-                  fontWeight: FontWeight.bold,
-                  color: isBreak ? Colors.green : AppColors.primary,
+                isBreak
+                    ? "Relax your mind for a few minutes"
+                    : "Stay focused on your task",
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              ),
+
+              Spacer(),
+
+              Container(
+                width: 290,
+                height: 290,
+
+                child: Stack(
+                  alignment: Alignment.center,
+
+                  children: [
+                    SizedBox(
+                      width: 290,
+                      height: 290,
+
+                      child: CustomPaint(
+                        painter: PomodoroPainter(
+                          progress: progress,
+                          color: isBreak ? Colors.green : AppColors.primary,
+                        ),
+                      ),
+                    ),
+
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          formatTime(remainingSeconds),
+                          style: TextStyle(
+                            fontSize: 52,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+
+                        SizedBox(height: 10),
+
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: (isBreak ? Colors.green : AppColors.primary)
+                                .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Text(
+                            isBreak ? "BREAK" : "FOCUS",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isBreak ? Colors.green : AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
 
-              SizedBox(height: 25),
+              Spacer(),
 
-              /// 🔘 Controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  /// ▶️ Start / Resume
-                  _circleButton(icon: Icons.play_arrow, onTap: startTimer),
+                  buildButton(
+                    icon: isRunning
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    onTap: isRunning ? pauseTimer : startTimer,
+                    isPrimary: true,
+                  ),
 
-                  SizedBox(width: 15),
+                  SizedBox(width: 20),
 
-                  /// ⏸ Pause
-                  _circleButton(icon: Icons.pause, onTap: pauseTimer),
-
-                  SizedBox(width: 15),
-
-                  /// 🔁 Reset
-                  _circleButton(icon: Icons.refresh, onTap: resetTimer),
+                  buildButton(icon: Icons.refresh_rounded, onTap: resetTimer),
                 ],
               ),
 
-              SizedBox(height: 15),
-
-              /// 🔹 Subtitle
-              Text(
-                isBreak
-                    ? "Relax. Let your brain breathe."
-                    : "Deep focus. No distractions.",
-                style: AppStyles.subtitle,
-              ),
+              SizedBox(height: 40),
             ],
           ),
         ),
@@ -167,18 +251,87 @@ class _FocusScreenState extends State<FocusScreen> {
     );
   }
 
-  Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
+  Widget buildButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 55,
-        width: 55,
+
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+
+        width: isPrimary ? 80 : 65,
+        height: isPrimary ? 80 : 65,
+
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          color: isPrimary
+              ? (isBreak ? Colors.green : AppColors.primary)
+              : Colors.white,
+
           shape: BoxShape.circle,
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
-        child: Icon(icon, color: Colors.white),
+
+        child: Icon(
+          icon,
+          color: isPrimary ? Colors.white : Colors.black87,
+          size: 34,
+        ),
       ),
     );
+  }
+}
+
+class PomodoroPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  PomodoroPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = 14.0;
+
+    final backgroundPaint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.15)
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final progressPaint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final center = Offset(size.width / 2, size.height / 2);
+
+    final radius = min(size.width / 2, size.height / 2) - strokeWidth;
+
+    canvas.drawCircle(center, radius, backgroundPaint);
+
+    final sweepAngle = 2 * pi * progress;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      -sweepAngle,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }

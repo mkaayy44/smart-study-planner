@@ -243,7 +243,7 @@ class _FocusScreenState extends State<FocusScreen> {
                 ],
               ),
 
-              SizedBox(height: 40),
+              SizedBox(height: 80),
             ],
           ),
         ),

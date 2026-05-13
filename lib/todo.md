@@ -27,8 +27,8 @@ QUICK TASKS
     - 'im overwhelmed' button keeps only imp stuff DONE
     - smart scheduling filters in tasks page (sort tasks by deadline, priority, diffc, assign to days) DONE
     - automatically suggests when to study task LATER (already in smart schedule)
-    - pomodoro focus save data session backend if logged in 
-    - productivity analysis (completed tasks *, sessions *)
-    - home page analytics more (hours/day ,streak, charts, ..)
+    - pomodoro focus save data session backend if logged in DONE
+    - productivity analysis (completed tasks *, sessions *) DONE
+    - home page analytics more (hours/day ,streak, charts, ..) 
     - if swipe to complete task make option to see completed tasks
     - if error happens it happens behind dialog instead of closing it

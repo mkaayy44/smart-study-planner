@@ -29,6 +29,8 @@ QUICK TASKS
     - automatically suggests when to study task LATER (already in smart schedule)
     - pomodoro focus save data session backend if logged in DONE
     - productivity analysis (completed tasks *, sessions *) DONE
-    - home page analytics more (hours/day ,streak, charts, ..) 
+    - home page analytics more (hours/day ,streak, charts, ..) DONE
+    - profile screen make DONE
     - if swipe to complete task make option to see completed tasks
+    - streak logic !!
     - if error happens it happens behind dialog instead of closing it

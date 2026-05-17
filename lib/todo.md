@@ -8,15 +8,15 @@ QUICK TASKS
     - make logout working DONE
     
     DESIGN TASKS
-    - make add button more aesthetic
-    - make focus screen more aesthetic
-    - add images in signup and login screens
+    - make add button more aesthetic LATER
+    - make focus screen more aesthetic DONE
+    - add images in signup and login screens 
     - fix skip in signup screen not so down
-    - see if we can add header
-    - smooth nav between pages i want
-    - change outside icon app
-    - make ui better for all pages but till now good
-    - please dont exit screen for full focus pomodoro page
+    - see if we can add header LATER
+    - smooth nav between pages i want LATER
+    - change outside icon app 
+    - make ui better for all pages but till now good LATER
+    - please dont exit screen for full focus pomodoro page 
 
     TECHNICAL TASKS
     - remove back arrow from header tasks screen DONE

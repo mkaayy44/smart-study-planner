@@ -805,7 +805,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         : Colors.green,
                     content: Text(
                       overwhelmedMode
-                          ? "Overwhelmed mode enabled 💙"
+                          ? "Overwhelmed mode enabled"
                           : "Overwhelmed mode disabled",
                     ),
                   ),

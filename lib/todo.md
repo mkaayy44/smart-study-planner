@@ -1,4 +1,4 @@
-DONE TASKS
+    DONE TASKS
     - overflow when typing in signup or login field fix DONE
     - when error appears in signup or login display correctly DONE
     - add correct fields for tasks addition not only title DONE
@@ -18,19 +18,19 @@ DONE TASKS
     - home page analytics more (hours/day ,streak, charts, ..) DONE
     - profile screen make DONE
      streak logic !! DONE
-    
-    LEFT TASKS
+
+    TO NOT BE DONE
     - make add button more aesthetic LATER
     - see if we can add header LATER
     - smooth nav between pages i want LATER
     - make ui better for all pages but till now good LATER
     - change outside icon app 
+    - task reminder if deadline near notification LATER
+    - automatically suggests when to study task LATER (already in smart schedule) 
+    
+    LEFT TASKS
     - add images in signup and login screens 
     - fix skip in signup screen not so down
     - please dont exit screen for full focus pomodoro page 
-
-    TECHNICAL TASKS
-    - task reminder if deadline near notification LATER
-    - automatically suggests when to study task LATER (already in smart schedule) 
     - if swipe to complete task make option to see completed tasks LATER
     - if error happens it happens behind dialog instead of closing it 

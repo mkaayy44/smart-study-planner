@@ -160,7 +160,7 @@ class _FocusScreenState extends State<FocusScreen> {
               Text(
                 isBreak
                     ? "Relax your mind for a few minutes"
-                    : "Stay focused on your task",
+                    : "Stay focused on your task (Don't Exit Your Screen)",
                 style: TextStyle(fontSize: 15, color: Colors.grey[600]),
               ),
 

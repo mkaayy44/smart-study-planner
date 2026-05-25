@@ -17,6 +17,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final phone = TextEditingController();
 
   bool loading = false;
+  bool isPasswordVisible = false;
 
   Future<void> signup() async {
     if (email.text.isEmpty ||
@@ -24,7 +25,32 @@ class _SignupScreenState extends State<SignupScreen> {
         name.text.isEmpty ||
         phone.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill all fields")),
+        SnackBar(
+          content: Text("Please fill all fields"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Email validation
+    if (!email.text.contains('@') || !email.text.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please enter a valid email address"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Password validation
+    if (password.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Password must be at least 6 characters"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -54,9 +80,26 @@ class _SignupScreenState extends State<SignupScreen> {
         MaterialPageRoute(builder: (_) => MainNavigation()),
       );
     } on FirebaseAuthException catch (e) {
+      String errorMessage = "Signup failed";
+      if (e.code == 'email-already-in-use') {
+        errorMessage = "Email already in use. Please login instead.";
+      } else if (e.code == 'weak-password') {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message ?? "Signup failed"),
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("An error occurred. Please try again."),
           backgroundColor: Colors.red,
         ),
       );
@@ -69,44 +112,88 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      resizeToAvoidBottomInset: true, // This handles keyboard naturally
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView( // Single scroll view without Expanded
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkipButton(),
+              /// 🔹 Skip button (uncomment if needed)
+              // SkipButton(),
 
-              SizedBox(height: 40), // Reduced spacing
+              /// 🔹 Illustration Image
+              Center(
+                child: Image.network(
+                  'https://cdn-icons-png.flaticon.com/512/4341/4341029.png',
+                  height: 160,
+                  width: 160,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 160,
+                      width: 160,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person_add_alt_1,
+                        size: 70,
+                        color: AppColors.primary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              SizedBox(height: 20),
 
               /// 🔹 Title
               Text("Create account", style: AppStyles.title),
               SizedBox(height: 8),
-              Text("Start your focused journey",
-                  style: AppStyles.subtitle),
+              Text("Start your focused journey", style: AppStyles.subtitle),
 
-              SizedBox(height: 40),
+              SizedBox(height: 32),
 
               /// 🔹 Input Fields
-              _input("Name", name),
+              _input("Full Name", name, prefixIcon: Icons.person_outline),
               SizedBox(height: 16),
-              _input("Phone Number", phone),
+              _input("Phone Number", phone, 
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+              ),
               SizedBox(height: 16),
-              _input("Email", email),
+              _input("Email", email, 
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
               SizedBox(height: 16),
-              _input("Password", password, isPassword: true),
+              _input("Password", password, 
+                isPassword: true,
+                prefixIcon: Icons.lock_outline,
+              ),
 
-              SizedBox(height: 40),
+              SizedBox(height: 32),
 
-              /// 🔹 Button
+              /// 🔹 Sign Up Button
               GestureDetector(
                 onTap: loading ? null : signup,
                 child: Container(
                   height: 55,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: loading
@@ -114,7 +201,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         : Text(
                             "Sign Up",
                             style: TextStyle(
-                                color: Colors.white, fontSize: 16),
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                   ),
                 ),
@@ -135,13 +225,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ],
               ),
 
-              SizedBox(height: 30), // Bottom padding
+              SizedBox(height: 30),
             ],
           ),
         ),
@@ -153,23 +244,47 @@ class _SignupScreenState extends State<SignupScreen> {
     String hint,
     TextEditingController c, {
     bool isPassword = false,
+    IconData? prefixIcon,
+    TextInputType? keyboardType,
   }) {
     return Container(
-      height: 55,
-      padding: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: c,
-        obscureText: isPassword,
-        keyboardType:
-            hint == "Phone Number" ? TextInputType.phone : null,
+        obscureText: isPassword ? !isPasswordVisible : false,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          contentPadding: EdgeInsets.symmetric(vertical: 0),
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          prefixIcon: prefixIcon != null 
+              ? Icon(prefixIcon, color: AppColors.primary, size: 20)
+              : null,
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  },
+                )
+              : null,
+          contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         ),
       ),
     );

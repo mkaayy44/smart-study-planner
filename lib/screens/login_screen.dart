@@ -54,31 +54,55 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      resizeToAvoidBottomInset: true, // This handles keyboard naturally
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView( // Single scroll view without Expanded
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 Skip button
-              SkipButton(),
-
-              SizedBox(height: 80), // Fixed spacing instead of Spacer()
+              /// 🔹 Skip button (uncomment if needed)
+              // SkipButton(),
+              
+              /// 🔹 Illustration Image
+              Center(
+                child: Image.network(
+                  'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                  height: 180,
+                  width: 180,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      width: 180,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.school,
+                        size: 80,
+                        color: AppColors.primary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              SizedBox(height: 20),
 
               /// 🔹 Title
               Text("Welcome back", style: AppStyles.title),
               SizedBox(height: 8),
               Text("Stay focused, stay calm", style: AppStyles.subtitle),
 
-              SizedBox(height: 50),
+              SizedBox(height: 40),
 
               /// 🔹 Input Fields
               _input("Email", email),
               SizedBox(height: 16),
               _input("Password", password, isPassword: true),
 
-              SizedBox(height: 40),
+              SizedBox(height: 32),
 
               /// 🔹 Login button
               GestureDetector(
@@ -97,6 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                   ),
@@ -131,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              SizedBox(height: 30), // Bottom padding
+              SizedBox(height: 30),
             ],
           ),
         ),
@@ -150,13 +175,22 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: c,
         obscureText: isPassword,
+        keyboardType: hint == "Email" ? TextInputType.emailAddress : null,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[400]),
           contentPadding: EdgeInsets.symmetric(vertical: 0),
         ),
       ),

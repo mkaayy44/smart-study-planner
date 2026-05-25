@@ -371,51 +371,60 @@ class _TasksScreenState extends State<TasksScreen> {
 
                   ElevatedButton(
                     onPressed: () async {
+                      // Validate
                       if (titleController.text.trim().isEmpty) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Please enter a task title"),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Please enter a task title"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (selectedDeadline == null || selectedTime == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Please select date and time"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final finalDeadline = DateTime(
+                        selectedDeadline!.year,
+                        selectedDeadline!.month,
+                        selectedDeadline!.day,
+                        selectedTime!.hour,
+                        selectedTime!.minute,
+                      );
+
+                      if (finalDeadline.isBefore(DateTime.now())) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Deadline must be in the future! Please select a valid date and time.",
+                              style: TextStyle(color: Colors.white),
                             ),
-                          );
-                        }
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
                         return;
                       }
 
                       try {
-                        if (selectedDeadline == null || selectedTime == null) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Please select date and time"),
-                              ),
-                            );
-                          }
-                          return;
-                        }
+                        // Close the dialog first
+                        Navigator.pop(context);
 
-                        final finalDeadline = DateTime(
-                          selectedDeadline!.year,
-                          selectedDeadline!.month,
-                          selectedDeadline!.day,
-                          selectedTime!.hour,
-                          selectedTime!.minute,
+                        // Show loading indicator
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Adding task..."),
+                            duration: Duration(milliseconds: 500),
+                          ),
                         );
-
-                        if (finalDeadline.isBefore(DateTime.now())) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Deadline must be in the future! Please select a valid date and time.",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                          return;
-                        }
 
                         await firestore.addTask(
                           title: titleController.text.trim(),
@@ -468,12 +477,15 @@ class _TasksScreenState extends State<TasksScreen> {
                             );
                           }
                         }
-
-                        if (mounted) Navigator.pop(context);
                       } catch (e) {
                         if (mounted) {
+                          // Error already shows outside dialog
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error adding task: $e")),
+                            SnackBar(
+                              content: Text("Error adding task: $e"),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 3),
+                            ),
                           );
                         }
                       }
@@ -683,13 +695,12 @@ class _TasksScreenState extends State<TasksScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       if (titleController.text.trim().isEmpty) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Please enter a task title"),
-                            ),
-                          );
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Please enter a task title"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                         return;
                       }
 
@@ -705,20 +716,30 @@ class _TasksScreenState extends State<TasksScreen> {
                           );
 
                           if (finalDeadline.isBefore(DateTime.now())) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "Deadline must be in the future! Please select a valid date and time.",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: Colors.red,
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Deadline must be in the future! Please select a valid date and time.",
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                              );
-                            }
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
                             return;
                           }
                         }
+
+                        // Close dialog first
+                        Navigator.pop(context);
+
+                        // Show loading
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Updating task..."),
+                            duration: Duration(milliseconds: 500),
+                          ),
+                        );
 
                         await firestore.updateTask(
                           taskId: taskId,
@@ -729,11 +750,22 @@ class _TasksScreenState extends State<TasksScreen> {
                           deadline: finalDeadline,
                         );
 
-                        if (mounted) Navigator.pop(context);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Task updated successfully!"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
                       } catch (e) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error updating task: $e")),
+                            SnackBar(
+                              content: Text("Error updating task: $e"),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 3),
+                            ),
                           );
                         }
                       }
@@ -805,7 +837,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         : Colors.green,
                     content: Text(
                       overwhelmedMode
-                          ? "Overwhelmed mode enabled"
+                          ? "Overwhelmed mode enabled 💙"
                           : "Overwhelmed mode disabled",
                     ),
                   ),
@@ -862,7 +894,6 @@ class _TasksScreenState extends State<TasksScreen> {
     int sessionCount = 0;
 
     for (var task in tasks) {
-      // ⛔ Stop late-night studying
       if (currentTime.hour >= 22) {
         currentTime = DateTime(
           currentTime.year,
@@ -889,7 +920,7 @@ class _TasksScreenState extends State<TasksScreen> {
         'deadline': task['deadline'],
         'start': start,
         'end': end,
-        'score': calculateScore(task), // 👈 ADD THIS
+        'score': calculateScore(task),
       });
 
       sessionCount++;
@@ -921,13 +952,50 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> generateSmartSchedule() async {
-    final snapshot = await firestore.getTasks().first;
+    try {
+      final snapshot = await firestore.getTasks().first;
+      final docs = snapshot.docs;
 
-    final docs = snapshot.docs;
+      if (docs.isEmpty) {
+        if (mounted) {
+          // Close any open dialogs first
+          Navigator.of(context).popUntil((route) => route.isFirst);
 
-    final schedule = generateSchedule(docs);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("No tasks available to generate schedule"),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
 
-    await createPdf(schedule);
+      final schedule = generateSchedule(docs);
+      await createPdf(schedule);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Schedule PDF created successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Close any open dialogs
+        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error generating schedule: $e"),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   double calculateScore(Map<String, dynamic> task) {
@@ -1166,12 +1234,10 @@ class _TasksScreenState extends State<TasksScreen> {
             });
           }
 
-          // FIX: Use Column with Expanded, NOT SingleChildScrollView
           return Column(
             children: [
               buildSmartFeatures(),
               Expanded(
-                // This will take all remaining space
                 child: ListView.builder(
                   padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
                   itemCount: docs.length,
@@ -1238,7 +1304,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                   },
                                   activeColor: AppColors.primary,
                                 ),
-                                // Task info - Expanded to take available space
+                                // Task info
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -1262,7 +1328,6 @@ class _TasksScreenState extends State<TasksScreen> {
                                             color: Colors.grey[600],
                                           ),
                                         ),
-                                      // Tags section - moved here to be under task info
                                       SizedBox(height: 8),
                                       Wrap(
                                         spacing: 8,
@@ -1422,16 +1487,13 @@ class _TasksScreenState extends State<TasksScreen> {
                   },
                 ),
               ),
-              SizedBox(height: 100,)
             ],
           );
         },
       ),
-      
     );
   }
 
-  // Helper method to format deadline nicely
   String _formatDeadline(DateTime deadline) {
     final now = DateTime.now();
     final difference = deadline.difference(now);

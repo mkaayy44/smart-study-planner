@@ -1,4 +1,4 @@
-# DONE TASKS
+# DONE TASKS ALL
 
 - [x] overflow when typing in signup or login field fix
 - [x] when error appears in signup or login display correctly

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:studyplanner/app design/app_colors.dart';
-import 'package:studyplanner/buttons/skip_button.dart';
 import 'package:studyplanner/navigation/main_navigation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:studyplanner/services/firestore_service.dart';

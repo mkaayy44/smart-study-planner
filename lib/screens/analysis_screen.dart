@@ -32,6 +32,52 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     loadAnalytics();
   }
 
+  // ✅ ADD THIS METHOD - Copy from HomeScreen
+  int calculateRealStreak(
+    List<QueryDocumentSnapshot> tasks,
+    List<QueryDocumentSnapshot> sessions,
+  ) {
+    final Set<String> activeDays = {};
+
+    // Check completed tasks
+    for (var doc in tasks) {
+      final data = doc.data() as Map<String, dynamic>;
+
+      if (data['isCompleted'] == true && data['completedAt'] != null) {
+        final date = (data['completedAt'] as Timestamp).toDate();
+        activeDays.add("${date.year}-${date.month}-${date.day}");
+      }
+    }
+
+    // Check study sessions
+    for (var doc in sessions) {
+      final data = doc.data() as Map<String, dynamic>;
+      final timestamp = data['endedAt'] ?? data['date'];
+
+      if (timestamp != null) {
+        final date = (timestamp as Timestamp).toDate();
+        activeDays.add("${date.year}-${date.month}-${date.day}");
+      }
+    }
+
+    // Calculate consecutive days from today
+    int streakCount = 0;
+    DateTime current = DateTime.now();
+
+    while (true) {
+      final key = "${current.year}-${current.month}-${current.day}";
+
+      if (activeDays.contains(key)) {
+        streakCount++;
+        current = current.subtract(const Duration(days: 1));
+      } else {
+        break;
+      }
+    }
+
+    return streakCount;
+  }
+
   Future<void> loadAnalytics() async {
     if (uid == null) return;
 
@@ -76,6 +122,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
       totalFocusSeconds = seconds;
 
+      // ✅ ADD THIS - Calculate streak
+      streak = calculateRealStreak(tasksSnapshot.docs, sessionsSnapshot.docs);
+
       setState(() => loading = false);
     } catch (e) {
       debugPrint(e.toString());
@@ -83,7 +132,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     }
   }
 
-  // ✅ FORMAT: 1h 02m 05s
+  // FORMAT: 1h 02m 05s
   String formatTime(int totalSeconds) {
     final h = totalSeconds ~/ 3600;
     final m = (totalSeconds % 3600) ~/ 60;
@@ -153,7 +202,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
                     const SizedBox(height: 25),
 
-                    /// STREAK CARD (FULL SIZE LIKE BEFORE)
+                    /// STREAK CARD (NOW SHOWS CORRECT STREAK)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -179,7 +228,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                               color: Colors.white, size: 40),
                           const SizedBox(width: 16),
                           Text(
-                            "$streak Day Streak",
+                            streak == 0
+                                ? "0 Day Streak"
+                                : streak == 1
+                                    ? "1 Day Streak"
+                                    : "$streak Day Streak",
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 26,
@@ -192,7 +245,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
                     const SizedBox(height: 28),
 
-                    /// STATS GRID (FULL FEEL BACK)
+                    /// STATS GRID
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
